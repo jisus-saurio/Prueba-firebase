@@ -2,34 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './src/config/firebase';
+import { auth } from '../config/firebase';
 
-import SplashScreen from './src/screens/SplashScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import RegisterScreen from './src/screens/RegisterScreen';
-import EditProfileScreen from './src/screens/EditProfileScreen';
-import EditUserScreen from './src/screens/EditUserScreen'; // AGREGADO
-import TabNavigator from './src/navigation/TabNavigation';
+import SplashScreen from '../screens/SplashScreen';
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
+import TabNavigator from './TabNavigation';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
-export default function App() {
+export default function Navigation() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    // Timer para el splash screen (3 segundos)
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
     }, 3000);
 
+    // Listener para el estado de autenticación
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      // Solo ocultar el loading después de que termine el splash
       if (!showSplash) {
         setIsLoading(false);
       }
     });
 
+    // Limpiar el loading cuando termine el splash
     const loadingTimer = setTimeout(() => {
       setIsLoading(false);
     }, 3000);
@@ -41,6 +44,7 @@ export default function App() {
     };
   }, [showSplash]);
 
+  // Mostrar splash screen durante los primeros 3 segundos
   if (showSplash || isLoading) {
     return <SplashScreen />;
   }
@@ -49,6 +53,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
+          // Usuario autenticado - Usar TabNavigator
           <>
             <Stack.Screen name="Main" component={TabNavigator} />
             <Stack.Screen 
@@ -67,29 +72,26 @@ export default function App() {
                 },
               }}
             />
-            <Stack.Screen 
-              name="EditUser" 
-              component={EditUserScreen}
-              options={{ 
-                headerShown: true, 
-                title: 'Editar Usuario',
-                headerStyle: {
-                  backgroundColor: '#0a0a0a',
-                },
-                headerTintColor: '#3b82f6',
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                  color: '#ffffff',
-                },
-              }}
-            />
           </>
         ) : (
+          // Usuario no autenticado
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen 
               name="Register" 
               component={RegisterScreen}
+              options={{ 
+                headerShown: true, 
+                title: 'Crear Cuenta',
+                headerStyle: {
+                  backgroundColor: '#0a0a0a',
+                },
+                headerTintColor: '#00d4ff',
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                },
+              }}
             />
           </>
         )}

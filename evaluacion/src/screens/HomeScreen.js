@@ -338,59 +338,7 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Gestión de Usuarios */}
-        <Animated.View
-          style={[
-            styles.managementSection,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <View style={styles.managementHeader}>
-            <View style={styles.managementTitleContainer}>
-              <View style={styles.managementDot} />
-              <Text style={styles.managementTitle}>GESTIÓN DE USUARIOS</Text>
-            </View>
-          </View>
-          
-          <View style={styles.managementGrid}>
-            <TouchableOpacity 
-              style={styles.managementCard}
-              onPress={() => navigation.navigate('AddUser')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.managementCardContent}>
-                <View style={styles.managementIcon} />
-                <Text style={styles.managementCardTitle}>AGREGAR USUARIO</Text>
-                <Text style={styles.managementCardSubtitle}>Crear nueva cuenta</Text>
-                <View style={styles.managementCardGlow} />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.managementCard}
-              onPress={() => Alert.alert('Próximamente', 'Función en desarrollo')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.managementCardContent}>
-                <View style={styles.managementIconSecondary} />
-                <Text style={styles.managementCardTitle}>LISTA USUARIOS</Text>
-                <Text style={styles.managementCardSubtitle}>Ver todos</Text>
-                <View style={styles.managementCardGlowSecondary} />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.managementCard}
-              onPress={() => Alert.alert('Próximamente', 'Función en desarrollo')}
-              activeOpacity={0.8}
-            >
-             
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+        
 
         {/* Panel de estadísticas */}
         <Animated.View

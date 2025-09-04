@@ -10,9 +10,8 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -64,7 +63,7 @@ const BackgroundEffects = ({ pulseAnim, rotateAnim }) => {
 };
 
 // Componente para el header
-const FuturisticHeader = ({ fadeAnim, slideAnim, pulseAnim }) => (
+const FuturisticHeader = ({ fadeAnim, slideAnim, pulseAnim, userName }) => (
   <Animated.View
     style={[
       styles.headerContainer,
@@ -84,15 +83,17 @@ const FuturisticHeader = ({ fadeAnim, slideAnim, pulseAnim }) => (
     >
       <View style={styles.logoCircle}>
         <View style={styles.logoInner}>
-          <View style={styles.logoIcon} />
+          <Text style={styles.logoText}>
+            {userName ? userName.charAt(0).toUpperCase() : 'E'}
+          </Text>
         </View>
         <View style={styles.logoRing} />
         <View style={styles.logoRing2} />
       </View>
     </Animated.View>
     
-    <Text style={styles.titleText}>AGREGAR USUARIO</Text>
-    <Text style={styles.subtitleText}>Sistema de Gestión de Cuentas</Text>
+    <Text style={styles.titleText}>EDITAR USUARIO</Text>
+    <Text style={styles.subtitleText}>Modificación de Datos del Sistema</Text>
     
     <View style={styles.statusIndicator}>
       <Animated.View
@@ -103,7 +104,7 @@ const FuturisticHeader = ({ fadeAnim, slideAnim, pulseAnim }) => (
           },
         ]}
       />
-      <Text style={styles.statusText}>MÓDULO ACTIVO</Text>
+      <Text style={styles.statusText}>MODO EDICIÓN ACTIVO</Text>
     </View>
   </Animated.View>
 );
@@ -120,16 +121,22 @@ const FuturisticInput = ({
   keyboardType = 'default',
   autoCapitalize = 'none',
   maxLength,
-  multiline = false
+  multiline = false,
+  editable = true
 }) => (
   <View style={styles.inputGroup}>
     <Text style={styles.inputLabel}>{label}</Text>
     <View style={[
       styles.inputContainer,
-      focused && styles.inputContainerFocused
+      focused && styles.inputContainerFocused,
+      !editable && styles.inputContainerDisabled
     ]}>
       <TextInput
-        style={[styles.input, multiline && styles.inputMultiline]}
+        style={[
+          styles.input, 
+          multiline && styles.inputMultiline,
+          !editable && styles.inputDisabled
+        ]}
         placeholder={placeholder}
         placeholderTextColor="rgba(255, 255, 255, 0.4)"
         value={value}
@@ -142,22 +149,28 @@ const FuturisticInput = ({
         multiline={multiline}
         numberOfLines={multiline ? 3 : 1}
         textAlignVertical={multiline ? 'top' : 'center'}
+        editable={editable}
       />
-      {focused && <View style={styles.inputGlow} />}
+      {focused && editable && <View style={styles.inputGlow} />}
     </View>
   </View>
 );
 
 // Componente principal
-export default function AddUserScreen({ navigation }) {
+export default function EditUserScreen({ route, navigation }) {
+  const { userId, userData } = route.params;
+  
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    universityDegree: '',
-    graduationYear: '',
+    name: userData?.name || '',
+    email: userData?.email || '',
+    universityDegree: userData?.universityDegree || '',
+    graduationYear: userData?.graduationYear || '',
   });
+  
+  const [originalData, setOriginalData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Animaciones
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -204,7 +217,44 @@ export default function AddUserScreen({ navigation }) {
         }),
       ])
     ).start();
+
+    // Cargar datos actuales del usuario
+    loadUserData();
   }, []);
+
+  useEffect(() => {
+    // Verificar si hay cambios
+    const hasFormChanges = 
+      formData.name !== originalData.name ||
+      formData.universityDegree !== originalData.universityDegree ||
+      formData.graduationYear !== originalData.graduationYear;
+    
+    setHasChanges(hasFormChanges);
+  }, [formData, originalData]);
+
+  const loadUserData = async () => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setFormData({
+          name: data.name || '',
+          email: data.email || '',
+          universityDegree: data.universityDegree || '',
+          graduationYear: data.graduationYear || '',
+        });
+        setOriginalData({
+          name: data.name || '',
+          email: data.email || '',
+          universityDegree: data.universityDegree || '',
+          graduationYear: data.graduationYear || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar datos del usuario:', error);
+      Alert.alert('Error', 'No se pudieron cargar los datos del usuario');
+    }
+  };
 
   const updateField = (field, value) => {
     setFormData(prev => ({
@@ -214,22 +264,10 @@ export default function AddUserScreen({ navigation }) {
   };
 
   const validateForm = () => {
-    const { name, email, universityDegree, graduationYear } = formData;
+    const { name, universityDegree, graduationYear } = formData;
     
     if (!name.trim()) {
       Alert.alert('Error', 'El nombre es obligatorio');
-      return false;
-    }
-
-    if (!email.trim()) {
-      Alert.alert('Error', 'El email es obligatorio');
-      return false;
-    }
-
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Por favor, ingresa un email válido');
       return false;
     }
 
@@ -254,97 +292,77 @@ export default function AddUserScreen({ navigation }) {
     return true;
   };
 
-  const handleAddUser = async () => {
+  const handleSaveChanges = async () => {
     if (!validateForm()) return;
+
+    if (!hasChanges) {
+      Alert.alert('Sin Cambios', 'No se han realizado modificaciones');
+      return;
+    }
 
     setIsLoading(true);
     try {
-      // Generar contraseña temporal
-      const tempPassword = `temp${Math.random().toString(36).slice(-8)}`;
-      
-      // Crear usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth, 
-        formData.email.trim(), 
-        tempPassword
-      );
-
-      // Guardar datos en Firestore
-      const userData = {
+      // Actualizar solo los campos modificables (no el email)
+      const updateData = {
         name: formData.name.trim(),
-        email: formData.email.trim(),
         universityDegree: formData.universityDegree.trim(),
         graduationYear: formData.graduationYear.trim(),
-        createdAt: new Date().toISOString(),
-        createdBy: auth.currentUser?.uid || 'system',
-        isActive: true,
-        tempPassword: tempPassword, // Para que el admin pueda informar al usuario
+        updatedAt: new Date().toISOString(),
       };
 
-      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+      await updateDoc(doc(db, 'users', userId), updateData);
 
       Alert.alert(
-        'Usuario Creado Exitosamente', 
-        `Usuario: ${formData.name}\nEmail: ${formData.email}\nContraseña temporal: ${tempPassword}\n\n¡Asegúrate de compartir estas credenciales de forma segura!`,
+        'Actualización Exitosa', 
+        `Los datos de ${formData.name} han sido actualizados correctamente`,
         [
           {
-            text: 'Crear Otro',
-            onPress: () => {
-              setFormData({
-                name: '',
-                email: '',
-                universityDegree: '',
-                graduationYear: '',
-              });
-            },
-          },
-          {
-            text: 'Volver al Inicio',
-            onPress: () => navigation.navigate('Home'),
+            text: 'Volver a la Lista',
+            onPress: () => navigation.goBack(),
           },
         ]
       );
 
     } catch (error) {
-      console.log('Error al crear usuario:', error);
-      let message = 'Error al crear usuario';
-      
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          message = 'Este correo electrónico ya está registrado';
-          break;
-        case 'auth/invalid-email':
-          message = 'Correo electrónico inválido';
-          break;
-        case 'auth/weak-password':
-          message = 'La contraseña generada es muy débil';
-          break;
-        default:
-          message = `Error: ${error.message}`;
-      }
-      
-      Alert.alert('Error del Sistema', message);
+      console.error('Error al actualizar usuario:', error);
+      Alert.alert('Error del Sistema', 'No se pudieron guardar los cambios');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    Alert.alert(
-      'Confirmar Cancelación',
-      '¿Estás seguro de que quieres cancelar? Los datos ingresados se perderán.',
-      [
-        {
-          text: 'Continuar Editando',
-          style: 'cancel',
-        },
-        {
-          text: 'Sí, Cancelar',
-          style: 'destructive',
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
+    if (hasChanges) {
+      Alert.alert(
+        'Descartar Cambios',
+        '¿Estás seguro de que quieres descartar los cambios realizados?',
+        [
+          {
+            text: 'Continuar Editando',
+            style: 'cancel',
+          },
+          {
+            text: 'Descartar',
+            style: 'destructive',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No disponible';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -359,7 +377,8 @@ export default function AddUserScreen({ navigation }) {
         <FuturisticHeader 
           fadeAnim={fadeAnim} 
           slideAnim={slideAnim} 
-          pulseAnim={pulseAnim} 
+          pulseAnim={pulseAnim}
+          userName={formData.name}
         />
 
         {/* Formulario */}
@@ -375,8 +394,14 @@ export default function AddUserScreen({ navigation }) {
           <View style={styles.formHeader}>
             <View style={styles.formTitleContainer}>
               <View style={styles.formDot} />
-              <Text style={styles.formTitle}>DATOS DEL USUARIO</Text>
+              <Text style={styles.formTitle}>MODIFICAR DATOS</Text>
             </View>
+            {hasChanges && (
+              <View style={styles.changesIndicator}>
+                <View style={styles.changesDot} />
+                <Text style={styles.changesText}>CAMBIOS PENDIENTES</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.formContent}>
@@ -392,14 +417,13 @@ export default function AddUserScreen({ navigation }) {
             />
 
             <FuturisticInput
-              label="CORREO ELECTRÓNICO"
+              label="CORREO ELECTRÓNICO (NO EDITABLE)"
               value={formData.email}
-              onChangeText={(value) => updateField('email', value)}
-              placeholder="usuario@ejemplo.com"
-              focused={focusedInput === 'email'}
-              onFocus={() => setFocusedInput('email')}
-              onBlur={() => setFocusedInput(null)}
-              keyboardType="email-address"
+              placeholder="Correo electrónico"
+              focused={false}
+              onFocus={() => {}}
+              onBlur={() => {}}
+              editable={false}
             />
 
             <FuturisticInput
@@ -430,16 +454,27 @@ export default function AddUserScreen({ navigation }) {
             <View style={styles.infoPanel}>
               <View style={styles.infoPanelHeader}>
                 <View style={styles.infoDot} />
-                <Text style={styles.infoPanelTitle}>INFORMACIÓN DEL SISTEMA</Text>
+                <Text style={styles.infoPanelTitle}>INFORMACIÓN DE CUENTA</Text>
               </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Creado:</Text>
+                <Text style={styles.infoValue}>
+                  {formatDate(originalData.createdAt || userData?.createdAt)}
+                </Text>
+              </View>
+              {originalData.updatedAt && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Última actualización:</Text>
+                  <Text style={styles.infoValue}>
+                    {formatDate(originalData.updatedAt)}
+                  </Text>
+                </View>
+              )}
               <Text style={styles.infoText}>
-                • Se generará una contraseña temporal automáticamente
+                • El correo electrónico no puede ser modificado por seguridad
               </Text>
               <Text style={styles.infoText}>
-                • El usuario recibirá acceso inmediato al sistema
-              </Text>
-              <Text style={styles.infoText}>
-                • La fecha de "Miembro desde" se asignará automáticamente
+                • Los cambios se aplicarán inmediatamente al guardar
               </Text>
             </View>
 
@@ -457,16 +492,19 @@ export default function AddUserScreen({ navigation }) {
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.createButton, isLoading && styles.createButtonDisabled]}
-                onPress={handleAddUser}
-                disabled={isLoading}
+                style={[
+                  styles.saveButton, 
+                  (isLoading || !hasChanges) && styles.saveButtonDisabled
+                ]}
+                onPress={handleSaveChanges}
+                disabled={isLoading || !hasChanges}
                 activeOpacity={0.8}
               >
-                <View style={styles.createContent}>
-                  <Text style={styles.createText}>
-                    {isLoading ? 'PROCESANDO...' : 'CREAR USUARIO'}
+                <View style={styles.saveContent}>
+                  <Text style={styles.saveText}>
+                    {isLoading ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
                   </Text>
-                  <View style={styles.createGlow} />
+                  <View style={styles.saveGlow} />
                 </View>
               </TouchableOpacity>
             </View>
@@ -499,10 +537,10 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   gradientLayer1: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    backgroundColor: 'rgba(59, 130, 246, 0.08)',
   },
   gradientLayer2: {
-    backgroundColor: 'rgba(59, 130, 246, 0.06)',
+    backgroundColor: 'rgba(16, 185, 129, 0.06)',
     transform: [{ rotate: '30deg' }],
   },
   gradientLayer3: {
@@ -522,7 +560,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 2,
     height: 2,
-    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+    backgroundColor: 'rgba(59, 130, 246, 0.6)',
     borderRadius: 1,
   },
 
@@ -539,7 +577,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 50,
     height: 50,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   topLeft: {
     top: 60,
@@ -600,15 +638,15 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoIcon: {
-    width: 20,
-    height: 20,
-    backgroundColor: '#10b981',
-    borderRadius: 10,
+  logoText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 1,
   },
   logoRing: {
     position: 'absolute',
@@ -616,7 +654,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     borderStyle: 'dashed',
   },
   logoRing2: {
@@ -625,7 +663,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(16, 185, 129, 0.2)',
   },
   titleText: {
     fontSize: 24,
@@ -633,7 +671,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 2,
     marginBottom: 4,
-    textShadowColor: 'rgba(16, 185, 129, 0.5)',
+    textShadowColor: 'rgba(59, 130, 246, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
   },
@@ -653,11 +691,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10b981',
+    backgroundColor: '#3b82f6',
   },
   statusText: {
     fontSize: 10,
-    color: '#10b981',
+    color: '#3b82f6',
     fontWeight: '600',
     letterSpacing: 1,
   },
@@ -679,12 +717,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
   },
   formDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10b981',
+    backgroundColor: '#3b82f6',
     marginRight: 8,
   },
   formTitle: {
@@ -692,6 +731,30 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#ffffff',
     letterSpacing: 2,
+  },
+  changesIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  changesDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#f59e0b',
+    marginRight: 6,
+  },
+  changesText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#f59e0b',
+    letterSpacing: 1,
   },
   formContent: {
     padding: 24,
@@ -716,8 +779,12 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   inputContainerFocused: {
-    borderColor: '#10b981',
-    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+    borderColor: '#3b82f6',
+    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+  },
+  inputContainerDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   input: {
     padding: 16,
@@ -729,6 +796,9 @@ const styles = StyleSheet.create({
     height: 80,
     textAlignVertical: 'top',
   },
+  inputDisabled: {
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
   inputGlow: {
     position: 'absolute',
     top: -1,
@@ -736,7 +806,7 @@ const styles = StyleSheet.create({
     right: -1,
     bottom: -1,
     borderRadius: 13,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
     zIndex: -1,
   },
 
@@ -758,14 +828,29 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#10b981',
+    backgroundColor: '#3b82f6',
     marginRight: 6,
   },
   infoPanelTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#10b981',
+    color: '#3b82f6',
     letterSpacing: 1,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
+  },
+  infoValue: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontWeight: '500',
   },
   infoText: {
     fontSize: 12,
@@ -810,35 +895,35 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(220, 53, 69, 0.1)',
     zIndex: -1,
   },
-  createButton: {
+  saveButton: {
     flex: 2,
     position: 'relative',
   },
-  createButtonDisabled: {
-    opacity: 0.6,
+  saveButtonDisabled: {
+    opacity: 0.5,
   },
-  createContent: {
-    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+  saveContent: {
+    backgroundColor: 'rgba(59, 130, 246, 0.8)',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
     alignItems: 'center',
     position: 'relative',
   },
-  createText: {
+  saveText: {
     color: '#000000',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
   },
-  createGlow: {
+  saveGlow: {
     position: 'absolute',
     top: -2,
     left: -2,
     right: -2,
     bottom: -2,
     borderRadius: 14,
-    backgroundColor: 'rgba(16, 185, 129, 0.3)',
+    backgroundColor: 'rgba(59, 130, 246, 0.3)',
     zIndex: -1,
   },
 });
