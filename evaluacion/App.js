@@ -76,15 +76,7 @@ export default function App() {
               name="AddUser" 
               component={AddUserScreen}
               options={{ 
-                headerShown: true, 
-                title: 'Agregar Usuario',
-                headerStyle: {
-                  backgroundColor: '#f1f5f9',
-                },
-                headerTintColor: '#1e293b',
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                },
+                headerShown: false,
               }}
             />
           </>
@@ -95,17 +87,6 @@ export default function App() {
             <Stack.Screen 
               name="Register" 
               component={RegisterScreen}
-              options={{ 
-                headerShown: true, 
-                title: 'Crear Cuenta',
-                headerStyle: {
-                  backgroundColor: '#f8fafc',
-                },
-                headerTintColor: '#1e293b',
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                },
-              }}
             />
           </>
         )}
