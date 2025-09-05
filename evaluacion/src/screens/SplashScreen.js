@@ -8,7 +8,118 @@ import {
   Dimensions,
 } from 'react-native';
 
+// Importar componentes
+import BackgroundEffectsCustom from '../components/BackgroundEffectsCustom';
+import AuthFormWrapper from '../components/AuthFormWrapper';
+
 const { width, height } = Dimensions.get('window');
+
+// Componente para el logo del splash
+const SplashLogo = ({ fadeAnim, scaleAnim, rotateAnim }) => {
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.logoContainer,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { scale: scaleAnim },
+            { rotate: spin },
+          ],
+        },
+      ]}
+    >
+      <View style={styles.logoCircle}>
+        <View style={styles.logoInner}>
+          <View style={styles.logoIcon} />
+        </View>
+        <View style={styles.logoRing} />
+        <View style={styles.logoRing2} />
+      </View>
+    </Animated.View>
+  );
+};
+
+// Componente para el título animado
+const SplashTitle = ({ fadeAnim, slideAnim }) => (
+  <Animated.View
+    style={[
+      styles.titleContainer,
+      {
+        transform: [{ translateY: slideAnim }],
+        opacity: fadeAnim,
+      },
+    ]}
+  >
+    <Text style={styles.mainTitle}>USERFULY</Text>
+    <Text style={styles.subtitle}>Connect • Create • Collaborate</Text>
+    
+    <AuthFormWrapper.DecorativeLines 
+      lineColor="rgba(0, 212, 255, 0.5)"
+      dotColor="#00d4ff"
+    />
+  </Animated.View>
+);
+
+// Componente para el indicador de carga
+const LoadingIndicator = ({ fadeAnim, pulseAnim, progressAnim }) => {
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.loadingSection,
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: pulseAnim }],
+        },
+      ]}
+    >
+      <View style={styles.loadingContainer}>
+        <View style={styles.spinner}>
+          <ActivityIndicator size="large" color="#00d4ff" />
+        </View>
+        <Text style={styles.loadingText}>Inicializando...</Text>
+      </View>
+
+      {/* Barra de progreso */}
+      <View style={styles.progressBarContainer}>
+        <Animated.View
+          style={[
+            styles.progressBar,
+            {
+              width: progressWidth,
+            },
+          ]}
+        />
+      </View>
+      <Text style={styles.progressText}>Cargando recursos</Text>
+    </Animated.View>
+  );
+};
+
+// Componente para información de versión
+const VersionInfo = ({ fadeAnim }) => (
+  <Animated.View
+    style={[
+      styles.versionContainer,
+      {
+        opacity: fadeAnim,
+      },
+    ]}
+  >
+    <Text style={styles.versionText}>v2.0.0 Beta</Text>
+    <Text style={styles.copyrightText}>© 2024 - Powered by React Native</Text>
+  </Animated.View>
+);
 
 export default function SplashScreen() {
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -91,139 +202,48 @@ export default function SplashScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
-
   return (
     <View style={styles.container}>
-      {/* Fondo con gradiente animado */}
-      <View style={styles.backgroundGradient}>
-        <View style={[styles.gradientLayer, styles.gradientLayer1]} />
-        <View style={[styles.gradientLayer, styles.gradientLayer2]} />
-        <View style={[styles.gradientLayer, styles.gradientLayer3]} />
-      </View>
-
-      {/* Partículas flotantes */}
-      <View style={styles.particlesContainer}>
-        {[...Array(12)].map((_, i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.particle,
-              {
-                top: Math.random() * height,
-                left: Math.random() * width,
-                transform: [
-                  {
-                    rotate: spin,
-                  },
-                  {
-                    scale: pulseAnim,
-                  },
-                ],
-              },
-            ]}
-          />
-        ))}
-      </View>
+      <BackgroundEffectsCustom 
+        pulseAnim={pulseAnim} 
+        rotateAnim={rotateAnim}
+        particleCount={12}
+        primaryColor="rgba(0, 212, 255, 0.6)"
+        gradientColors={{
+          layer1: 'rgba(16, 185, 129, 0.1)',
+          layer2: 'rgba(59, 130, 246, 0.08)',
+          layer3: 'rgba(147, 51, 234, 0.06)',
+        }}
+        cornerColor="rgba(0, 212, 255, 0.3)"
+        cornerSize={60}
+        cornerOffset={{ top: 30, bottom: 30, side: 30 }}
+      />
 
       {/* Contenido principal */}
       <View style={styles.content}>
         {/* Logo animado */}
-        <Animated.View
-          style={[
-            styles.logoContainer,
-            {
-              opacity: fadeAnim,
-              transform: [
-                { scale: scaleAnim },
-                { rotate: spin },
-              ],
-            },
-          ]}
-        >
-        </Animated.View>
+        <SplashLogo 
+          fadeAnim={fadeAnim}
+          scaleAnim={scaleAnim}
+          rotateAnim={rotateAnim}
+        />
 
         {/* Título animado */}
-        <Animated.View
-          style={[
-            styles.titleContainer,
-            {
-              transform: [{ translateY: slideAnim }],
-              opacity: fadeAnim,
-            },
-          ]}
-        >
-          <Text style={styles.mainTitle}>USERFULY</Text>
-          <Text style={styles.subtitle}>Connect • Create • Collaborate</Text>
-          
-          {/* Líneas decorativas */}
-          <View style={styles.decorativeLines}>
-            <View style={styles.line} />
-            <View style={styles.centerDot} />
-            <View style={styles.line} />
-          </View>
-        </Animated.View>
+        <SplashTitle 
+          fadeAnim={fadeAnim}
+          slideAnim={slideAnim}
+        />
 
         {/* Indicador de carga moderno */}
-        <Animated.View
-          style={[
-            styles.loadingSection,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: pulseAnim }],
-            },
-          ]}
-        >
-          <View style={styles.loadingContainer}>
-            <View style={styles.spinner}>
-              <ActivityIndicator size="large" color="#00d4ff" />
-            </View>
-            <Text style={styles.loadingText}>Inicializando...</Text>
-          </View>
-
-          {/* Barra de progreso */}
-          <View style={styles.progressBarContainer}>
-            <Animated.View
-              style={[
-                styles.progressBar,
-                {
-                  width: progressWidth,
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.progressText}>Cargando recursos</Text>
-        </Animated.View>
+        <LoadingIndicator 
+          fadeAnim={fadeAnim}
+          pulseAnim={pulseAnim}
+          progressAnim={progressAnim}
+        />
       </View>
 
       {/* Información de versión */}
-      <Animated.View
-        style={[
-          styles.versionContainer,
-          {
-            opacity: fadeAnim,
-          },
-        ]}
-      >
-        <Text style={styles.versionText}>v2.0.0 Beta</Text>
-        <Text style={styles.copyrightText}>© 2024 - Powered by React Native</Text>
-      </Animated.View>
-
-      {/* Efectos de esquinas */}
-      <View style={styles.cornerEffects}>
-        <View style={[styles.cornerEffect, styles.topLeft]} />
-        <View style={[styles.cornerEffect, styles.topRight]} />
-        <View style={[styles.cornerEffect, styles.bottomLeft]} />
-        <View style={[styles.cornerEffect, styles.bottomRight]} />
-      </View>
+      <VersionInfo fadeAnim={fadeAnim} />
     </View>
   );
 }
@@ -234,49 +254,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  // Fondo con gradientes animados
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer1: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-  },
-  gradientLayer2: {
-    backgroundColor: 'rgba(59, 130, 246, 0.08)',
-    transform: [{ rotate: '45deg' }],
-  },
-  gradientLayer3: {
-    backgroundColor: 'rgba(147, 51, 234, 0.06)',
-    transform: [{ rotate: '-45deg' }],
-  },
-
-  // Partículas flotantes
-  particlesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  particle: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: 'rgba(0, 212, 255, 0.6)',
-    borderRadius: 2,
   },
 
   content: {
@@ -307,7 +284,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoIcon: {
-    fontSize: 40,
+    width: 30,
+    height: 30,
+    backgroundColor: '#00d4ff',
+    borderRadius: 15,
   },
   logoRing: {
     position: 'absolute',
@@ -348,24 +328,6 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
     marginBottom: 20,
-  },
-
-  // Líneas decorativas
-  decorativeLines: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  line: {
-    width: 40,
-    height: 2,
-    backgroundColor: 'rgba(0, 212, 255, 0.5)',
-  },
-  centerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#00d4ff',
   },
 
   // Sección de carga
@@ -421,45 +383,5 @@ const styles = StyleSheet.create({
   copyrightText: {
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.4)',
-  },
-
-  // Efectos de esquinas
-  cornerEffects: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-  },
-  cornerEffect: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderColor: 'rgba(0, 212, 255, 0.3)',
-  },
-  topLeft: {
-    top: 30,
-    left: 30,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-  },
-  topRight: {
-    top: 30,
-    right: 30,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-  },
-  bottomLeft: {
-    bottom: 30,
-    left: 30,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-  },
-  bottomRight: {
-    bottom: 30,
-    right: 30,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
   },
 });

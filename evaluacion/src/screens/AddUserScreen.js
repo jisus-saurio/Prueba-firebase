@@ -1,154 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   Alert,
   ScrollView,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
-const { width, height } = Dimensions.get('window');
+// Importar componentes
+import BackgroundEffects from '../components/BackgroundEffects';
+import FuturisticHeader from '../components/FuturisticHeader';
+import FuturisticInput from '../components/FuturisticInput';
+import InfoPanel from '../components/InfoPanel';
+import FuturisticButton from '../components/FuturisticButton';
 
-// Componente para efectos de fondo
-const BackgroundEffects = ({ pulseAnim, rotateAnim }) => {
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  return (
-    <>
-      {/* Fondo futurista */}
-      <View style={styles.backgroundGradient}>
-        <View style={[styles.gradientLayer, styles.gradientLayer1]} />
-        <View style={[styles.gradientLayer, styles.gradientLayer2]} />
-        <View style={[styles.gradientLayer, styles.gradientLayer3]} />
-      </View>
-
-      {/* Partículas flotantes */}
-      <View style={styles.particlesContainer}>
-        {[...Array(10)].map((_, i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.particle,
-              {
-                top: Math.random() * height,
-                left: Math.random() * width,
-                transform: [
-                  { scale: pulseAnim },
-                  { rotate: spin },
-                ],
-              },
-            ]}
-          />
-        ))}
-      </View>
-
-      {/* Efectos de esquinas */}
-      <View style={styles.cornerEffects}>
-        <View style={[styles.cornerEffect, styles.topLeft]} />
-        <View style={[styles.cornerEffect, styles.topRight]} />
-        <View style={[styles.cornerEffect, styles.bottomLeft]} />
-        <View style={[styles.cornerEffect, styles.bottomRight]} />
-      </View>
-    </>
-  );
-};
-
-// Componente para el header
-const FuturisticHeader = ({ fadeAnim, slideAnim, pulseAnim }) => (
-  <Animated.View
-    style={[
-      styles.headerContainer,
-      {
-        opacity: fadeAnim,
-        transform: [{ translateY: slideAnim }],
-      },
-    ]}
-  >
-    <Animated.View
-      style={[
-        styles.logoContainer,
-        {
-          transform: [{ scale: pulseAnim }],
-        },
-      ]}
-    >
-      <View style={styles.logoCircle}>
-        <View style={styles.logoInner}>
-          <View style={styles.logoIcon} />
-        </View>
-        <View style={styles.logoRing} />
-        <View style={styles.logoRing2} />
-      </View>
-    </Animated.View>
-    
-    <Text style={styles.titleText}>AGREGAR USUARIO</Text>
-    <Text style={styles.subtitleText}>Sistema de Gestión de Cuentas</Text>
-    
-    <View style={styles.statusIndicator}>
-      <Animated.View
-        style={[
-          styles.statusDot,
-          {
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
-      />
-      <Text style={styles.statusText}>MÓDULO ACTIVO</Text>
-    </View>
-  </Animated.View>
-);
-
-// Componente para input futurista
-const FuturisticInput = ({ 
-  label, 
-  value, 
-  onChangeText, 
-  placeholder, 
-  focused, 
-  onFocus, 
-  onBlur, 
-  keyboardType = 'default',
-  autoCapitalize = 'none',
-  maxLength,
-  multiline = false
-}) => (
-  <View style={styles.inputGroup}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <View style={[
-      styles.inputContainer,
-      focused && styles.inputContainerFocused
-    ]}>
-      <TextInput
-        style={[styles.input, multiline && styles.inputMultiline]}
-        placeholder={placeholder}
-        placeholderTextColor="rgba(255, 255, 255, 0.4)"
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        maxLength={maxLength}
-        multiline={multiline}
-        numberOfLines={multiline ? 3 : 1}
-        textAlignVertical={multiline ? 'top' : 'center'}
-      />
-      {focused && <View style={styles.inputGlow} />}
-    </View>
-  </View>
-);
-
-// Componente principal
 export default function AddUserScreen({ navigation }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -359,7 +227,12 @@ export default function AddUserScreen({ navigation }) {
         <FuturisticHeader 
           fadeAnim={fadeAnim} 
           slideAnim={slideAnim} 
-          pulseAnim={pulseAnim} 
+          pulseAnim={pulseAnim}
+          title="AGREGAR USUARIO"
+          subtitle="Sistema de Gestión de Cuentas"
+          statusText="MÓDULO ACTIVO"
+          statusColor="#10b981"
+          titleColor="#10b981"
         />
 
         {/* Formulario */}
@@ -426,49 +299,29 @@ export default function AddUserScreen({ navigation }) {
               maxLength={4}
             />
 
-            {/* Info panel */}
-            <View style={styles.infoPanel}>
-              <View style={styles.infoPanelHeader}>
-                <View style={styles.infoDot} />
-                <Text style={styles.infoPanelTitle}>INFORMACIÓN DEL SISTEMA</Text>
-              </View>
-              <Text style={styles.infoText}>
-                • Se generará una contraseña temporal automáticamente
-              </Text>
-              <Text style={styles.infoText}>
-                • El usuario recibirá acceso inmediato al sistema
-              </Text>
-              <Text style={styles.infoText}>
-                • La fecha de "Miembro desde" se asignará automáticamente
-              </Text>
-            </View>
+            <InfoPanel title="INFORMACIÓN DEL SISTEMA">
+              <InfoPanel.Text>• Se generará una contraseña temporal automáticamente</InfoPanel.Text>
+              <InfoPanel.Text>• El usuario recibirá acceso inmediato al sistema</InfoPanel.Text>
+              <InfoPanel.Text>• La fecha de "Miembro desde" se asignará automáticamente</InfoPanel.Text>
+            </InfoPanel>
 
             {/* Botones de acción */}
             <View style={styles.actionContainer}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
+              <FuturisticButton
+                title="CANCELAR"
+                variant="danger"
                 onPress={handleCancel}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cancelContent}>
-                  <Text style={styles.cancelText}>CANCELAR</Text>
-                  <View style={styles.cancelGlow} />
-                </View>
-              </TouchableOpacity>
+                flex={1}
+              />
               
-              <TouchableOpacity 
-                style={[styles.createButton, isLoading && styles.createButtonDisabled]}
+              <FuturisticButton
+                title="CREAR USUARIO"
+                variant="primary"
                 onPress={handleAddUser}
                 disabled={isLoading}
-                activeOpacity={0.8}
-              >
-                <View style={styles.createContent}>
-                  <Text style={styles.createText}>
-                    {isLoading ? 'PROCESANDO...' : 'CREAR USUARIO'}
-                  </Text>
-                  <View style={styles.createGlow} />
-                </View>
-              </TouchableOpacity>
+                loading={isLoading}
+                flex={2}
+              />
             </View>
           </View>
         </Animated.View>
@@ -482,90 +335,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-
-  // Fondo futurista
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer1: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-  },
-  gradientLayer2: {
-    backgroundColor: 'rgba(59, 130, 246, 0.06)',
-    transform: [{ rotate: '30deg' }],
-  },
-  gradientLayer3: {
-    backgroundColor: 'rgba(147, 51, 234, 0.04)',
-    transform: [{ rotate: '-30deg' }],
-  },
-
-  // Partículas
-  particlesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  particle: {
-    position: 'absolute',
-    width: 2,
-    height: 2,
-    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-    borderRadius: 1,
-  },
-
-  // Efectos de esquinas
-  cornerEffects: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-  },
-  cornerEffect: {
-    position: 'absolute',
-    width: 50,
-    height: 50,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
-  },
-  topLeft: {
-    top: 60,
-    left: 20,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-  },
-  topRight: {
-    top: 60,
-    right: 20,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-  },
-  bottomLeft: {
-    bottom: 120,
-    left: 20,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-  },
-  bottomRight: {
-    bottom: 120,
-    right: 20,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-  },
-
   scrollContainer: {
     flex: 1,
   },
@@ -573,96 +342,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 70,
   },
-
-  // Header
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  logoContainer: {
-    marginBottom: 20,
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logoInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoIcon: {
-    width: 20,
-    height: 20,
-    backgroundColor: '#10b981',
-    borderRadius: 10,
-  },
-  logoRing: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
-    borderStyle: 'dashed',
-  },
-  logoRing2: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
-  },
-  titleText: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#ffffff',
-    letterSpacing: 2,
-    marginBottom: 4,
-    textShadowColor: 'rgba(16, 185, 129, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  },
-  subtitleText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10b981',
-  },
-  statusText: {
-    fontSize: 10,
-    color: '#10b981',
-    fontWeight: '600',
-    letterSpacing: 1,
-  },
-
-  // Formulario
   formCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.02)',
     borderRadius: 16,
@@ -696,149 +375,8 @@ const styles = StyleSheet.create({
   formContent: {
     padding: 24,
   },
-
-  // Inputs
-  inputGroup: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.8)',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  inputContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    position: 'relative',
-  },
-  inputContainerFocused: {
-    borderColor: '#10b981',
-    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-  },
-  input: {
-    padding: 16,
-    fontSize: 16,
-    color: '#ffffff',
-    fontWeight: '500',
-  },
-  inputMultiline: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  inputGlow: {
-    position: 'absolute',
-    top: -1,
-    left: -1,
-    right: -1,
-    bottom: -1,
-    borderRadius: 13,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    zIndex: -1,
-  },
-
-  // Panel de información
-  infoPanel: {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  infoPanelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#10b981',
-    marginRight: 6,
-  },
-  infoPanelTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#10b981',
-    letterSpacing: 1,
-  },
-  infoText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '500',
-    marginBottom: 4,
-    lineHeight: 16,
-  },
-
-  // Botones de acción
   actionContainer: {
     flexDirection: 'row',
     gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    position: 'relative',
-  },
-  cancelContent: {
-    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(220, 53, 69, 0.3)',
-    position: 'relative',
-  },
-  cancelText: {
-    color: '#dc3545',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  cancelGlow: {
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 14,
-    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-    zIndex: -1,
-  },
-  createButton: {
-    flex: 2,
-    position: 'relative',
-  },
-  createButtonDisabled: {
-    opacity: 0.6,
-  },
-  createContent: {
-    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  createText: {
-    color: '#000000',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  createGlow: {
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 14,
-    backgroundColor: 'rgba(16, 185, 129, 0.3)',
-    zIndex: -1,
   },
 });

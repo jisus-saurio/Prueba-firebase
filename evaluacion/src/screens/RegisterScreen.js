@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -15,6 +14,14 @@ import {
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+
+// Importar componentes
+import BackgroundEffectsCustom from '../components/BackgroundEffectsCustom';
+import FuturisticInput from '../components/FuturisticInput';
+import InfoPanel from '../components/InfoPanel';
+import FuturisticButton from '../components/FuturisticButton';
+import AuthFormWrapper from '../components/AuthFormWrapper';
+import AnimatedLogo from '../components/AnimatedLogo';
 
 const { width, height } = Dimensions.get('window');
 
@@ -150,37 +157,19 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Fondo futurista */}
-      <View style={styles.backgroundGradient}>
-        <View style={[styles.gradientLayer, styles.gradientLayer1]} />
-        <View style={[styles.gradientLayer, styles.gradientLayer2]} />
-        <View style={[styles.gradientLayer, styles.gradientLayer3]} />
-      </View>
-
-      {/* Partículas flotantes */}
-      <View style={styles.particlesContainer}>
-        {[...Array(8)].map((_, i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.particle,
-              {
-                top: Math.random() * height,
-                left: Math.random() * width,
-                transform: [{ scale: pulseAnim }],
-              },
-            ]}
-          />
-        ))}
-      </View>
-
-      {/* Efectos de esquinas */}
-      <View style={styles.cornerEffects}>
-        <View style={[styles.cornerEffect, styles.topLeft]} />
-        <View style={[styles.cornerEffect, styles.topRight]} />
-        <View style={[styles.cornerEffect, styles.bottomLeft]} />
-        <View style={[styles.cornerEffect, styles.bottomRight]} />
-      </View>
+      <BackgroundEffectsCustom 
+        pulseAnim={pulseAnim} 
+        particleCount={8}
+        primaryColor="rgba(0, 212, 255, 0.6)"
+        gradientColors={{
+          layer1: 'rgba(16, 185, 129, 0.08)',
+          layer2: 'rgba(59, 130, 246, 0.06)',
+          layer3: 'rgba(147, 51, 234, 0.04)',
+        }}
+        cornerColor="rgba(0, 212, 255, 0.3)"
+        cornerOffset={{ top: 60, bottom: 40, side: 20 }}
+        cornerSize={40}
+      />
 
       <KeyboardAvoidingView 
         style={styles.keyboardContainer}
@@ -200,177 +189,117 @@ export default function RegisterScreen({ navigation }) {
               },
             ]}
           >
-            <View style={styles.logoContainer}>
-              <View style={styles.logoCircle}>
-                <View style={styles.logoInner}>
-                  <View style={styles.logoIcon} />
-                </View>
-                <View style={styles.logoRing} />
-              </View>
-            </View>
+            <AnimatedLogo
+              size={80}
+              fadeAnim={fadeAnim}
+              innerColor="rgba(0, 212, 255, 0.2)"
+              iconColor="#00d4ff"
+              ring1Color="rgba(0, 212, 255, 0.3)"
+              showRings={true}
+            />
             
             <Text style={styles.title}>CREAR CUENTA</Text>
             <Text style={styles.subtitle}>Información Académica</Text>
             
-            <View style={styles.decorativeLines}>
-              <View style={styles.line} />
-              <View style={styles.centerDot} />
-              <View style={styles.line} />
-            </View>
+            <AuthFormWrapper.DecorativeLines 
+              lineColor="rgba(0, 212, 255, 0.5)"
+              dotColor="#00d4ff"
+            />
           </Animated.View>
 
           {/* Formulario futurista */}
-          <Animated.View
-            style={[
-              styles.formContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
+          <AuthFormWrapper
+            fadeAnim={fadeAnim}
+            slideAnim={slideAnim}
+            padding={24}
           >
             {/* Campo Nombre */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>NOMBRE COMPLETO</Text>
-              <View style={[
-                styles.inputWrapper,
-                focusedInput === 'name' && styles.inputWrapperFocused
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ingresa tu nombre completo"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={formData.name}
-                  onChangeText={(value) => updateField('name', value)}
-                  autoCapitalize="words"
-                  onFocus={() => setFocusedInput('name')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-                <View style={styles.inputGlow} />
-              </View>
-            </View>
+            <FuturisticInput
+              label="NOMBRE COMPLETO"
+              value={formData.name}
+              onChangeText={(value) => updateField('name', value)}
+              placeholder="Ingresa tu nombre completo"
+              focused={focusedInput === 'name'}
+              onFocus={() => setFocusedInput('name')}
+              onBlur={() => setFocusedInput(null)}
+              autoCapitalize="words"
+            />
 
             {/* Campo Email */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
-              <View style={[
-                styles.inputWrapper,
-                focusedInput === 'email' && styles.inputWrapperFocused
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="ejemplo@universidad.edu"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={formData.email}
-                  onChangeText={(value) => updateField('email', value)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onFocus={() => setFocusedInput('email')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-                <View style={styles.inputGlow} />
-              </View>
-            </View>
+            <FuturisticInput
+              label="CORREO ELECTRÓNICO"
+              value={formData.email}
+              onChangeText={(value) => updateField('email', value)}
+              placeholder="ejemplo@universidad.edu"
+              focused={focusedInput === 'email'}
+              onFocus={() => setFocusedInput('email')}
+              onBlur={() => setFocusedInput(null)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
             {/* Campo Contraseña */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>CONTRASEÑA</Text>
-              <View style={[
-                styles.inputWrapper,
-                focusedInput === 'password' && styles.inputWrapperFocused
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Mínimo 6 caracteres"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={formData.password}
-                  onChangeText={(value) => updateField('password', value)}
-                  secureTextEntry
-                  onFocus={() => setFocusedInput('password')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-                <View style={styles.inputGlow} />
-              </View>
-            </View>
+            <FuturisticInput
+              label="CONTRASEÑA"
+              value={formData.password}
+              onChangeText={(value) => updateField('password', value)}
+              placeholder="Mínimo 6 caracteres"
+              focused={focusedInput === 'password'}
+              onFocus={() => setFocusedInput('password')}
+              onBlur={() => setFocusedInput(null)}
+              keyboardType="default"
+              autoCapitalize="none"
+            />
 
             {/* Campo Título */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>TÍTULO UNIVERSITARIO</Text>
-              <View style={[
-                styles.inputWrapper,
-                styles.inputWrapperLarge,
-                focusedInput === 'degree' && styles.inputWrapperFocused
-              ]}>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Ingeniería en Sistemas, Licenciatura..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={formData.universityDegree}
-                  onChangeText={(value) => updateField('universityDegree', value)}
-                  autoCapitalize="words"
-                  multiline
-                  numberOfLines={2}
-                  textAlignVertical="top"
-                  onFocus={() => setFocusedInput('degree')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-                <View style={styles.inputGlow} />
-              </View>
-            </View>
+            <FuturisticInput
+              label="TÍTULO UNIVERSITARIO"
+              value={formData.universityDegree}
+              onChangeText={(value) => updateField('universityDegree', value)}
+              placeholder="Ingeniería en Sistemas, Licenciatura..."
+              focused={focusedInput === 'degree'}
+              onFocus={() => setFocusedInput('degree')}
+              onBlur={() => setFocusedInput(null)}
+              autoCapitalize="words"
+              multiline={true}
+            />
 
             {/* Campo Año */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>AÑO DE GRADUACIÓN</Text>
-              <View style={[
-                styles.inputWrapper,
-                focusedInput === 'year' && styles.inputWrapperFocused
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder={`${new Date().getFullYear()}`}
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={formData.graduationYear}
-                  onChangeText={(value) => updateField('graduationYear', value)}
-                  keyboardType="numeric"
-                  maxLength={4}
-                  onFocus={() => setFocusedInput('year')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-                <View style={styles.inputGlow} />
-              </View>
-            </View>
+            <FuturisticInput
+              label="AÑO DE GRADUACIÓN"
+              value={formData.graduationYear}
+              onChangeText={(value) => updateField('graduationYear', value)}
+              placeholder={`${new Date().getFullYear()}`}
+              focused={focusedInput === 'year'}
+              onFocus={() => setFocusedInput('year')}
+              onBlur={() => setFocusedInput(null)}
+              keyboardType="numeric"
+              maxLength={4}
+            />
 
             {/* Panel de información */}
-            <View style={styles.infoPanel}>
-              <View style={styles.infoPanelHeader}>
-                <View style={styles.infoDot} />
-                <Text style={styles.infoPanelTitle}>INFORMACIÓN</Text>
-              </View>
-              <Text style={styles.infoText}>Todos los campos son obligatorios</Text>
-              <Text style={styles.infoText}>Tu información será verificada</Text>
-            </View>
+            <InfoPanel 
+              title="INFORMACIÓN"
+              titleColor="#00d4ff"
+              dotColor="#00d4ff"
+              backgroundColor="rgba(0, 212, 255, 0.05)"
+              borderColor="rgba(0, 212, 255, 0.2)"
+            >
+              <InfoPanel.Text>Todos los campos son obligatorios</InfoPanel.Text>
+              <InfoPanel.Text>Tu información será verificada</InfoPanel.Text>
+            </InfoPanel>
 
             {/* Botón de registro */}
-            <TouchableOpacity
-              style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
+            <FuturisticButton
+              title="CREAR CUENTA"
+              variant="secondary"
               onPress={handleRegister}
               disabled={isLoading}
-              activeOpacity={0.8}
-            >
-              <View style={styles.buttonContent}>
-                <Text style={styles.registerButtonText}>
-                  {isLoading ? 'PROCESANDO...' : 'CREAR CUENTA'}
-                </Text>
-                <View style={styles.buttonGlow} />
-              </View>
-            </TouchableOpacity>
+              loading={isLoading}
+              style={styles.registerButton}
+            />
 
-            {/* Separador */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <View style={styles.dividerDot} />
-              <View style={styles.dividerLine} />
-            </View>
+            <AuthFormWrapper.Divider />
 
             {/* Link de login */}
             <TouchableOpacity 
@@ -380,7 +309,7 @@ export default function RegisterScreen({ navigation }) {
             >
               <Text style={styles.loginButtonText}>YA TENGO CUENTA</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </AuthFormWrapper>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -392,90 +321,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-
-  // Fondo futurista
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer1: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-  },
-  gradientLayer2: {
-    backgroundColor: 'rgba(59, 130, 246, 0.06)',
-    transform: [{ rotate: '45deg' }],
-  },
-  gradientLayer3: {
-    backgroundColor: 'rgba(147, 51, 234, 0.04)',
-    transform: [{ rotate: '-45deg' }],
-  },
-
-  // Partículas
-  particlesContainer: {
-    position: 'absolute',
-    top: -100,
-    left: -50,
-    right: -50,
-    bottom: -50,
-  },
-  particle: {
-    position: 'absolute',
-    width: 3,
-    height: 3,
-    backgroundColor: 'rgba(0, 212, 255, 0.6)',
-    borderRadius: 1.5,
-  },
-
-  // Efectos de esquinas
-  cornerEffects: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-  },
-  cornerEffect: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderColor: 'rgba(0, 212, 255, 0.3)',
-  },
-  topLeft: {
-    top: 60,
-    left: 20,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-  },
-  topRight: {
-    top: 60,
-    right: 20,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-  },
-  bottomLeft: {
-    bottom: 40,
-    left: 20,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-  },
-  bottomRight: {
-    bottom: 40,
-    right: 20,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-  },
-
   keyboardContainer: {
     flex: 1,
   },
@@ -491,79 +336,13 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     position: 'relative',
   },
-  backButton: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: 10,
-  },
-  backButtonContent: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  backArrow: {
-    fontSize: 20,
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  backButtonGlow: {
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 212, 255, 0.2)',
-    zIndex: -1,
-  },
-  logoContainer: {
-    marginBottom: 30,
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logoInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(0, 212, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoIcon: {
-    width: 20,
-    height: 20,
-    backgroundColor: '#00d4ff',
-    borderRadius: 10,
-  },
-  logoRing: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 212, 255, 0.3)',
-    borderStyle: 'dashed',
-  },
   title: {
     fontSize: 28,
     fontWeight: '900',
     color: '#ffffff',
     letterSpacing: 4,
     marginBottom: 8,
+    marginTop: 30,
     textShadowColor: 'rgba(0, 212, 255, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
@@ -574,159 +353,10 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: 20,
   },
-  decorativeLines: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  line: {
-    width: 30,
-    height: 1,
-    backgroundColor: 'rgba(0, 212, 255, 0.5)',
-  },
-  centerDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#00d4ff',
-  },
-
-  // Formulario
-  formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.8)',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    position: 'relative',
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  inputWrapperLarge: {
-    minHeight: 60,
-  },
-  inputWrapperFocused: {
-    borderColor: 'rgba(0, 212, 255, 0.5)',
-    backgroundColor: 'rgba(0, 212, 255, 0.05)',
-  },
-  input: {
-    padding: 16,
-    fontSize: 16,
-    color: '#ffffff',
-    fontWeight: '500',
-  },
-  textArea: {
-    height: 60,
-    textAlignVertical: 'top',
-  },
-  inputGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-  },
-
-  // Panel de información
-  infoPanel: {
-    backgroundColor: 'rgba(0, 212, 255, 0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 212, 255, 0.2)',
-  },
-  infoPanelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#00d4ff',
-    marginRight: 8,
-  },
-  infoPanelTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#00d4ff',
-    letterSpacing: 1,
-  },
-  infoText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 4,
-  },
 
   // Botón de registro
   registerButton: {
-    borderRadius: 12,
     marginBottom: 24,
-    position: 'relative',
-  },
-  registerButtonDisabled: {
-    opacity: 0.6,
-  },
-  buttonContent: {
-    backgroundColor: 'rgba(0, 212, 255, 0.8)',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  registerButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
-  buttonGlow: {
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 212, 255, 0.3)',
-    zIndex: -1,
-  },
-
-  // Separador
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  dividerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
 
   // Botón de login
