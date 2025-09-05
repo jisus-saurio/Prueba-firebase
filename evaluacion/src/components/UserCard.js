@@ -318,3 +318,5 @@ const styles = StyleSheet.create({
 });
 
 export default UserCard;
+
+//Esto es un cambio
