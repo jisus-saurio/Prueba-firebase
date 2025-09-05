@@ -53,7 +53,7 @@
 
 <div align="center">
 
-**📺 Enlace:** [[Video](https://drive.google.com/drive/folders/1-srXGlscXpVrG_s6x6ZVmURvoQdNp-0p?usp=drive_link)]
+**📺 Enlace:** [[Video](https://drive.google.com/drive/folders/1-srXGlscXpVrG_s6x6ZVmURvoQdNp-0p?usp=sharing)]
 
 *⚠️ Nota: El video es público y no requiere permisos especiales para visualizarlo*
 
