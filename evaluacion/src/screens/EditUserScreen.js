@@ -234,25 +234,34 @@ export default function EditUserScreen({ route, navigation }) {
 
   const loadUserData = async () => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
+      console.log('Cargando datos del usuario con ID:', userId);
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
       if (userDoc.exists()) {
         const data = userDoc.data();
-        setFormData({
+        console.log('Datos del usuario cargados:', data);
+        
+        const userData = {
           name: data.name || '',
           email: data.email || '',
           universityDegree: data.universityDegree || '',
           graduationYear: data.graduationYear || '',
-        });
+        };
+        
+        setFormData(userData);
         setOriginalData({
-          name: data.name || '',
-          email: data.email || '',
-          universityDegree: data.universityDegree || '',
-          graduationYear: data.graduationYear || '',
+          ...userData,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
         });
+      } else {
+        console.log('No se encontró el usuario');
+        Alert.alert('Error', 'No se encontró el usuario');
       }
     } catch (error) {
       console.error('Error al cargar datos del usuario:', error);
-      Alert.alert('Error', 'No se pudieron cargar los datos del usuario');
+      Alert.alert('Error', 'No se pudieron cargar los datos del usuario: ' + error.message);
     }
   };
 
@@ -293,7 +302,12 @@ export default function EditUserScreen({ route, navigation }) {
   };
 
   const handleSaveChanges = async () => {
-    if (!validateForm()) return;
+    console.log('Iniciando guardado de cambios...');
+    
+    if (!validateForm()) {
+      console.log('Validación del formulario falló');
+      return;
+    }
 
     if (!hasChanges) {
       Alert.alert('Sin Cambios', 'No se han realizado modificaciones');
@@ -301,8 +315,11 @@ export default function EditUserScreen({ route, navigation }) {
     }
 
     setIsLoading(true);
+    
     try {
-      // Actualizar solo los campos modificables (no el email)
+      console.log('Guardando cambios para usuario ID:', userId);
+      
+      // Preparar datos para actualizar
       const updateData = {
         name: formData.name.trim(),
         universityDegree: formData.universityDegree.trim(),
@@ -310,7 +327,13 @@ export default function EditUserScreen({ route, navigation }) {
         updatedAt: new Date().toISOString(),
       };
 
-      await updateDoc(doc(db, 'users', userId), updateData);
+      console.log('Datos a actualizar:', updateData);
+
+      // Actualizar en Firebase
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, updateData);
+
+      console.log('Usuario actualizado exitosamente');
 
       Alert.alert(
         'Actualización Exitosa', 
@@ -325,7 +348,7 @@ export default function EditUserScreen({ route, navigation }) {
 
     } catch (error) {
       console.error('Error al actualizar usuario:', error);
-      Alert.alert('Error del Sistema', 'No se pudieron guardar los cambios');
+      Alert.alert('Error del Sistema', 'No se pudieron guardar los cambios: ' + error.message);
     } finally {
       setIsLoading(false);
     }
